@@ -41,6 +41,8 @@ pub mod uname;
 pub mod uptime;
 #[cfg(windows)]
 pub mod kill;
+#[cfg(windows)]
+pub mod nice;
 
 // src/command/mod.rs
 pub fn dummy() {

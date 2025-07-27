@@ -5,7 +5,7 @@ use std::io::{self, Write};
 #[cfg(windows)]
 use winix::pipeline::execute_pipeline;
 #[cfg(windows)]
-use winix::{chmod, chown};
+use winix::{chmod, chown, nice};
 use winix::{echo, touch};
 
 
@@ -22,7 +22,8 @@ mod free;
 mod git;
 #[cfg(windows)]
 mod kill;
-
+#[cfg(windows)]
+mod nice;
 mod powershell;
 mod ps;
 mod sensors;
@@ -82,7 +83,7 @@ fn show_splash_screen() {
     println!();
     println!("{}", "Available Commands:".bold().white());
     println!(
-        "  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}",
+        "  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n {}\n {}\n  {}\n  {}\n  {}\n  {}",
         "cd".bold().yellow(),
         "chmod".bold().yellow(),
         "chown".bold().yellow(),
@@ -92,6 +93,7 @@ fn show_splash_screen() {
         "git".bold().yellow(),
         "kill".bold().yellow(),
         "ls".bold().yellow(),
+        "nice".bold().yellow(),
         "ps".bold().yellow(),
         "psh/powershell".bold().cyan(),
         "pwd".bold().yellow(),
@@ -230,28 +232,20 @@ fn command_loop() {
                 }
             }
             "kill" => {
-                if parts.len() < 2 {
-                    println!("{}", "Usage: kill [-signal|-s signal|-p] [-q value] [-a] [--timeout milliseconds signal] [--] pid|name...".red());
-                    println!();
-                    println!("{}", "Supported Windows signals:".yellow());
-                    println!("  {}", "-2, -INT    Interrupt (Ctrl+C)".dimmed());
-                    println!("  {}", "-3, -QUIT   Quit (Ctrl+Break)".dimmed());
-                    println!("  {}", "-9, -KILL   Force terminate (default)".dimmed());
-                    println!("  {}", "-15, -TERM  Graceful terminate".dimmed());
-                    println!();
-                    println!("{}", "Examples:".yellow());
-                    println!("  {}", "kill 1234".dimmed());
-                    println!("  {}", "kill -TERM 1234".dimmed());
-                    println!("  {}", "kill -9 1234".dimmed());
-                    println!("  {}", "kill -a notepad".dimmed());
-                } else {
-                    // Pass all arguments except the command itself
-                    let args: Vec<&str> = parts[1..].to_vec();
-                    #[cfg(windows)]
-                    match kill::execute(&args) {
-                        Ok(_) => {}
-                        Err(e) => println!("{}", format!("kill: {}", e).red()),
-                    }
+                // Pass all arguments except the command itself
+                let args: Vec<&str> = parts[1..].to_vec();
+                #[cfg(windows)]
+                match kill::execute(&args) {
+                    Ok(_) => {}
+                    Err(e) => println!("{}", format!("kill: {}", e).red()),
+                }
+            }
+            "nice" => {
+                let args: Vec<&str> = parts[1..].iter().copied().collect();
+                #[cfg(windows)]
+                match nice::execute(&args) {
+                    Ok(_) => {}
+                    Err(e) => println!("{}", format!("nice: {}", e).red()),
                 }
             }
             "psh" | "powershell" => {
@@ -268,7 +262,7 @@ fn command_loop() {
             "help" => {
                 println!("{}", "Available Commands:".bold().white());
                 println!(
-                    "  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}",
+                    "  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n  {}\n {}\n  {}\n  {}\n  {}\n  {}",
                     "cd".bold().yellow(),
                     "chmod".bold().yellow(),
                     "chown".bold().yellow(),
@@ -278,6 +272,7 @@ fn command_loop() {
                     "git".bold().yellow(),
                     "kill".bold().yellow(),
                     "ls".bold().yellow(),
+                    "nice".bold().yellow(),
                     "ps".bold().yellow(),
                     "psh/powershell".bold().cyan(),
                     "pwd".bold().yellow(),
